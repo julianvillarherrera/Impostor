@@ -181,6 +181,10 @@ input:focus {
   gap: 10px;
 }
 
+#btnAddPlayer {
+  margin-top: 14px;
+}
+
 .icon-btn {
   border: none;
   background: rgba(255, 255, 255, 0.08);

@@ -9,6 +9,8 @@ const categories = {
   Países: ["España", "Argentina", "México", "Japón", "Italia", "Brasil"],
 };
 
+const spinPrompt = "Pulsa \"Girar\" para elegir quién empieza.";
+
 const state = {
   category: "Videojuegos",
   players: [],
@@ -147,6 +149,8 @@ function updateWheel() {
     return;
   }
 
+  spinResult.textContent = spinPrompt;
+
   const slice = 360 / total;
   const stops = state.players
     .map((_, idx) => {
@@ -184,6 +188,10 @@ function goToPage(pageName) {
     const active = step.dataset.step === pageName;
     step.classList.toggle("active", active);
   });
+
+  if (pageName === "turns") {
+    spinResult.textContent = spinPrompt;
+  }
 }
 
 function validatePlayers() {
@@ -284,7 +292,7 @@ function resetGame({ clearPlayers = false } = {}) {
   }
   state.wheelRotation = 0;
   roulette.style.transform = "rotate(0deg)";
-  spinResult.textContent = "Añade jugadores para girar la ruleta.";
+  spinResult.textContent = spinPrompt;
   state.assignments = [];
   state.mode = "decoy";
   renderModes();
