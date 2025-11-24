@@ -141,31 +141,50 @@ function renderModes() {
 
 function updateWheel() {
   const total = state.players.length;
+  const size = roulette.clientWidth || 240;
+  const dpr = window.devicePixelRatio || 1;
+  roulette.width = size * dpr;
+  roulette.height = size * dpr;
+
+  const ctx = roulette.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, size, size);
+
+  const center = size / 2;
+  const borderOffset = 12;
+  const radius = center - borderOffset;
+  const baseColor = "#2f3a54";
+  const dividerColor = "#111826";
+  const dividerWidth = 10;
+
+  ctx.beginPath();
+  ctx.arc(center, center, radius, 0, Math.PI * 2);
+  ctx.fillStyle = baseColor;
+  ctx.fill();
+
   if (!total) {
-    roulette.style.background = "conic-gradient(from 0deg, #2d3748 0deg, #2d3748 360deg)";
-    roulette.innerHTML = "";
     spinResult.textContent = "Añade jugadores para girar la ruleta.";
     return;
   }
 
   spinResult.textContent = spinPrompt;
 
-  const slice = 360 / total;
-  const baseColor = "#2f3a54";
-  const dividerColor = "#111826";
-  const gap = Math.min(6, slice * 0.35);
-  const stops = state.players
-    .map((_, idx) => {
-      const start = idx * slice;
-      const end = start + slice;
-      const solidEnd = end - gap;
-      return `${baseColor} ${start}deg ${solidEnd}deg, ${dividerColor} ${solidEnd}deg ${end}deg`;
-    })
-    .join(", ");
+  const sliceRad = (Math.PI * 2) / total;
+  ctx.save();
+  ctx.translate(center, center);
+  ctx.strokeStyle = dividerColor;
+  ctx.lineWidth = dividerWidth;
+  ctx.lineCap = "butt";
 
-  roulette.style.background = `conic-gradient(${stops})`;
+  for (let i = 0; i < total; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(radius, 0);
+    ctx.stroke();
+    ctx.rotate(sliceRad);
+  }
 
-  roulette.innerHTML = "";
+  ctx.restore();
 }
 
 function spinWheel() {
