@@ -151,29 +151,21 @@ function updateWheel() {
   spinResult.textContent = spinPrompt;
 
   const slice = 360 / total;
-  const colors =
-    total % 2 === 0 ? ["#3c4a6b", "#1f2a44"] : ["#3c4a6b", "#1f2a44", "#26334f"];
+  const baseColor = "#2f3a54";
+  const dividerColor = "#111826";
+  const gap = Math.min(1, slice * 0.2);
   const stops = state.players
     .map((_, idx) => {
       const start = idx * slice;
       const end = start + slice;
-      const color = colors[idx % colors.length];
-      return `${color} ${start}deg ${end}deg`;
+      const solidEnd = end - gap;
+      return `${baseColor} ${start}deg ${solidEnd}deg, ${dividerColor} ${solidEnd}deg ${end}deg`;
     })
     .join(", ");
 
   roulette.style.background = `conic-gradient(${stops})`;
 
   roulette.innerHTML = "";
-  state.players.forEach((name, idx) => {
-    const label = document.createElement("div");
-    label.className = "roulette-label";
-    const angle = idx * slice + slice / 2;
-    const radius = roulette.clientWidth / 2 - 32;
-    label.style.transform = `translate(-50%, -50%) rotate(${angle}deg) translate(0, -${radius}px) rotate(${-angle}deg)`;
-    label.textContent = name;
-    roulette.appendChild(label);
-  });
 }
 
 function spinWheel() {
