@@ -11,17 +11,6 @@
 </head>
 <body>
   <div class="app-shell">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Juego social</p>
-        <h1>Encuentra al impostor</h1>
-        <p class="lede">Configura la partida paso a paso y revela las cartas de cada jugador sin que los demás puedan mirar.</p>
-      </div>
-      <div class="top-actions">
-        <button class="btn ghost" id="btnReset">Reiniciar</button>
-      </div>
-    </header>
-
     <div class="stepper" id="stepper">
       <div class="step active" data-step="players">
         <span class="step-number">1</span>
@@ -133,16 +122,42 @@
           </div>
           <div class="cards-view">
             <article class="role-card large" id="activeCard">
-              <div class="role-pill" id="activeRole">Rol</div>
               <div class="card-name" id="activeName">Jugador</div>
-              <p class="role-description" id="activeDescription"></p>
-              <button class="btn primary reveal" id="revealCard">Revelar palabra</button>
-              <p class="secret-word" id="activeWord"></p>
+              <div class="card-secret">
+                <div class="role-pill" id="activeRole">Rol</div>
+                <p class="role-description" id="activeDescription"></p>
+                <p class="secret-word" id="activeWord"></p>
+              </div>
+              <div class="swipe-hint">
+                <span class="swipe-arrow">▲</span>
+                <p class="hint">Desliza hacia arriba para ver tu rol y palabra</p>
+                <small>Al soltar se ocultará de nuevo</small>
+              </div>
             </article>
           </div>
           <div class="page-actions">
-            <button class="btn ghost" id="hideCard">Ocultar palabra</button>
             <button class="btn primary" id="nextPlayer">Siguiente jugador</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" data-page="ready" hidden>
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">¡A jugar!</p>
+              <h2>Listo para comenzar</h2>
+              <p class="hint">Puedes revelar todos los roles o volver a configurar la partida.</p>
+            </div>
+          </div>
+          <div class="ready-actions">
+            <button class="btn primary" id="showSummary">Revelar roles y palabra</button>
+            <button class="btn secondary" id="btnReplay">Volver a jugar</button>
+            <button class="btn ghost" id="btnRestart">Reiniciar</button>
+          </div>
+          <div class="summary" id="summary" hidden>
+            <h3>Roles y palabras</h3>
+            <div id="summaryList" class="summary-list"></div>
           </div>
         </div>
       </section>

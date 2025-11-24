@@ -1,6 +1,6 @@
 const categories = {
-  Videojuegos: ["Mario", "Zelda", "Halo", "Minecraft", "Fortnite", "Tetris"],
-  Deportes: ["Fútbol", "Baloncesto", "Tenis", "Natación", "Ciclismo", "Voleibol"],
+  Videojuegos: ["", "", "", "", "", ""],
+  Deportes: ["", "", "", "", "", ""],
   "Películas y series": ["Inception", "Breaking Bad", "Avatar", "Friends", "Titanic", "The Office"],
   Comida: ["Pizza", "Sushi", "Hamburguesa", "Tacos", "Paella", "Arepa"],
   Animales: ["León", "Delfín", "Águila", "Koala", "Pingüino", "Tortuga"],
@@ -34,19 +34,24 @@ const impostorCountInput = document.getElementById("impostorCount");
 
 const btnAddPlayer = document.getElementById("btnAddPlayer");
 const btnSpin = document.getElementById("btnSpin");
-const btnReset = document.getElementById("btnReset");
 const btnToCategory = document.getElementById("toCategory");
 const btnToTurns = document.getElementById("toTurns");
 const btnToCards = document.getElementById("toCards");
-const btnReveal = document.getElementById("revealCard");
-const btnHide = document.getElementById("hideCard");
 const btnNextPlayer = document.getElementById("nextPlayer");
+const btnShowSummary = document.getElementById("showSummary");
+const btnReplay = document.getElementById("btnReplay");
+const btnRestart = document.getElementById("btnRestart");
+const summary = document.getElementById("summary");
+const summaryList = document.getElementById("summaryList");
 
 const activeCard = document.getElementById("activeCard");
 const activeRole = document.getElementById("activeRole");
 const activeName = document.getElementById("activeName");
 const activeDescription = document.getElementById("activeDescription");
 const activeWord = document.getElementById("activeWord");
+
+let dragStartY = 0;
+let dragging = false;
 
 function createPlayerInput(name = "") {
   const clone = playerTemplate.content.cloneNode(true);
@@ -247,33 +252,16 @@ function renderActiveCard() {
   activeWord.textContent = assignment.word;
   cardProgress.textContent = `Jugador ${state.currentIndex + 1} de ${total}`;
 
-  btnReveal.disabled = false;
-  btnHide.disabled = true;
-  activeWord.style.display = "none";
-  btnReveal.style.display = "inline-flex";
-}
-
-function revealWord() {
-  activeCard.classList.add("revealed");
-  activeWord.style.display = "block";
-  btnReveal.style.display = "none";
-  btnHide.disabled = false;
-}
-
-function hideWord() {
-  activeCard.classList.remove("revealed");
-  activeWord.style.display = "none";
-  btnReveal.style.display = "inline-flex";
-  btnHide.disabled = true;
+  activeCard.classList.remove("revealing");
+  activeCard.style.transform = "translateY(0)";
 }
 
 function nextPlayerCard() {
   if (state.currentIndex < state.assignments.length - 1) {
     state.currentIndex += 1;
-    hideWord();
     renderActiveCard();
   } else {
-    alert("Ya se repartieron todas las cartas. ¡A jugar!");
+    showReadyScreen();
   }
 }
 
@@ -284,20 +272,79 @@ function shuffle(arr) {
   }
 }
 
-function resetGame() {
-  playerList.innerHTML = "";
-  state.players = [];
-  const defaultCount = Math.max(3, parseInt(playerCountInput.value, 10) || 6);
-  playerCountInput.value = defaultCount;
-  adjustPlayerInputs(defaultCount);
+function resetGame({ clearPlayers = false } = {}) {
+  if (clearPlayers) {
+    playerList.innerHTML = "";
+    state.players = [];
+    const baseCount = 3;
+    playerCountInput.value = baseCount;
+    adjustPlayerInputs(baseCount);
+  } else {
+    syncPlayersFromInputs();
+  }
   state.wheelRotation = 0;
   roulette.style.transform = "rotate(0deg)";
   spinResult.textContent = "Añade jugadores para girar la ruleta.";
   state.assignments = [];
   state.mode = "decoy";
   renderModes();
+  state.currentIndex = 0;
+  cardProgress.textContent = "Jugador 1 de 1";
+  activeCard.classList.remove("revealing", "impostor", "civil");
+  activeCard.style.transform = "translateY(0)";
+  summary.hidden = true;
   goToPage("players");
   updateWheel();
+}
+
+function startReveal(e) {
+  dragging = true;
+  dragStartY = e.clientY ?? e.touches?.[0]?.clientY ?? 0;
+  activeCard.classList.remove("revealed");
+  if (e.pointerId !== undefined) {
+    activeCard.setPointerCapture(e.pointerId);
+  }
+}
+
+function moveReveal(e) {
+  if (!dragging) return;
+  const currentY = e.clientY ?? e.touches?.[0]?.clientY ?? 0;
+  const delta = Math.min(0, currentY - dragStartY);
+  const translate = Math.max(-160, delta);
+  activeCard.style.transform = `translateY(${translate}px)`;
+  if (translate <= -40) {
+    activeCard.classList.add("revealing");
+  } else {
+    activeCard.classList.remove("revealing");
+  }
+}
+
+function endReveal(e) {
+  if (e?.pointerId !== undefined) {
+    try {
+      activeCard.releasePointerCapture(e.pointerId);
+    } catch (err) {
+      // ignore release errors
+    }
+  }
+  dragging = false;
+  activeCard.style.transform = "translateY(0)";
+  setTimeout(() => activeCard.classList.remove("revealing"), 120);
+}
+
+function showReadyScreen() {
+  summary.hidden = true;
+  goToPage("ready");
+}
+
+function renderSummary() {
+  summaryList.innerHTML = "";
+  state.assignments.forEach((assignment) => {
+    const item = document.createElement("div");
+    item.className = "summary-item";
+    item.innerHTML = `<div><strong>${assignment.name}</strong><p class="muted">${assignment.role}</p></div><div class="word">${assignment.word || "(Vacío)"}</div>`;
+    summaryList.appendChild(item);
+  });
 }
 
 function init() {
@@ -323,7 +370,6 @@ function init() {
   });
 
   btnSpin.addEventListener("click", spinWheel);
-  btnReset.addEventListener("click", resetGame);
 
   btnToCategory.addEventListener("click", () => {
     if (validatePlayers()) {
@@ -341,6 +387,7 @@ function init() {
     const ok = prepareAssignments();
     if (ok) {
       renderActiveCard();
+      summary.hidden = true;
       goToPage("cards");
     }
   });
@@ -349,9 +396,25 @@ function init() {
     btn.addEventListener("click", () => goToPage(btn.dataset.back));
   });
 
-  btnReveal.addEventListener("click", revealWord);
-  btnHide.addEventListener("click", hideWord);
   btnNextPlayer.addEventListener("click", nextPlayerCard);
+
+  btnShowSummary.addEventListener("click", () => {
+    renderSummary();
+    summary.hidden = false;
+  });
+
+  btnReplay.addEventListener("click", () => {
+    summary.hidden = true;
+    goToPage("category");
+  });
+
+  btnRestart.addEventListener("click", () => resetGame({ clearPlayers: true }));
+
+  activeCard.addEventListener("pointerdown", startReveal);
+  activeCard.addEventListener("pointermove", moveReveal);
+  activeCard.addEventListener("pointerup", endReveal);
+  activeCard.addEventListener("pointercancel", endReveal);
+  activeCard.addEventListener("pointerleave", endReveal);
 }
 
 init();

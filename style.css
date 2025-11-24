@@ -28,18 +28,7 @@ body {
 
 .app-shell {
   max-width: 1100px;
-  margin: 0 auto 80px;
-}
-
-.topbar {
-  background: linear-gradient(135deg, #0f172a 0%, #0c1223 100%);
-  border-radius: 28px;
-  padding: 28px;
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  align-items: flex-start;
-  box-shadow: var(--shadow);
+  margin: 0 auto 60px;
 }
 
 h1 {
@@ -363,6 +352,9 @@ input:focus {
   gap: 10px;
   text-align: center;
   width: min(420px, 100%);
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
 }
 
 .role-card.large {
@@ -394,25 +386,86 @@ input:focus {
   font-weight: 800;
 }
 
+.card-secret {
+  opacity: 0;
+  transform: translateY(16px);
+  filter: blur(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease, filter 0.2s ease;
+}
+
+.role-card.revealing .card-secret {
+  opacity: 1;
+  transform: translateY(0);
+  filter: none;
+}
+
 .secret-word {
   background: rgba(255, 255, 255, 0.06);
   padding: 12px;
   border-radius: 12px;
   font-weight: 800;
   letter-spacing: 0.2px;
-  display: none;
 }
 
-.revealed .secret-word {
-  display: block;
+
+.swipe-hint {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
 }
 
-.revealed .reveal {
-  display: none;
+.swipe-arrow {
+  font-size: 24px;
 }
 
 .emoji {
   font-size: 36px;
+}
+
+.ready-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.summary {
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.summary h3 {
+  margin-top: 0;
+}
+
+.summary-list {
+  display: grid;
+  gap: 10px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.summary-item .muted {
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+.summary-item .word {
+  font-weight: 800;
 }
 
 @media (max-width: 860px) {
