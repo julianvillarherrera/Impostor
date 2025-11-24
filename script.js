@@ -14,25 +14,39 @@ const state = {
   players: [],
   impostorCount: 1,
   wheelRotation: 0,
+  mode: "decoy",
+  assignments: [],
+  currentIndex: 0,
 };
 
+const stepper = document.getElementById("stepper");
+const pages = document.querySelectorAll(".page");
 const playerList = document.getElementById("playerList");
 const playerTemplate = document.getElementById("playerInputTemplate");
-const cardTemplate = document.getElementById("cardTemplate");
 const categoryGrid = document.getElementById("categoryGrid");
 const selectedCategory = document.getElementById("selectedCategory");
 const roulette = document.getElementById("roulette");
 const spinResult = document.getElementById("spinResult");
+const cardProgress = document.getElementById("cardProgress");
 
 const playerCountInput = document.getElementById("playerCount");
 const impostorCountInput = document.getElementById("impostorCount");
 
 const btnAddPlayer = document.getElementById("btnAddPlayer");
 const btnSpin = document.getElementById("btnSpin");
-const btnPreparar = document.getElementById("btnPreparar");
-const btnReiniciar = document.getElementById("btnReiniciar");
-const btnOcultar = document.getElementById("btnOcultar");
-const cardsContainer = document.getElementById("cards");
+const btnReset = document.getElementById("btnReset");
+const btnToCategory = document.getElementById("toCategory");
+const btnToTurns = document.getElementById("toTurns");
+const btnToCards = document.getElementById("toCards");
+const btnReveal = document.getElementById("revealCard");
+const btnHide = document.getElementById("hideCard");
+const btnNextPlayer = document.getElementById("nextPlayer");
+
+const activeCard = document.getElementById("activeCard");
+const activeRole = document.getElementById("activeRole");
+const activeName = document.getElementById("activeName");
+const activeDescription = document.getElementById("activeDescription");
+const activeWord = document.getElementById("activeWord");
 
 function createPlayerInput(name = "") {
   const clone = playerTemplate.content.cloneNode(true);
@@ -107,6 +121,19 @@ function emojiForCategory(cat) {
   return map[cat] || "🃏";
 }
 
+function renderModes() {
+  document.querySelectorAll(".mode-card").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.mode === state.mode);
+    if (!card.dataset.bound) {
+      card.addEventListener("click", () => {
+        state.mode = card.dataset.mode;
+        renderModes();
+      });
+      card.dataset.bound = "true";
+    }
+  });
+}
+
 function updateWheel() {
   const total = state.players.length;
   if (!total) {
@@ -142,56 +169,112 @@ function spinWheel() {
   }, 2400);
 }
 
-function prepareGame() {
+function goToPage(pageName) {
+  pages.forEach((page) => {
+    const isActive = page.dataset.page === pageName;
+    page.hidden = !isActive;
+  });
+
+  stepper.querySelectorAll(".step").forEach((step) => {
+    const active = step.dataset.step === pageName;
+    step.classList.toggle("active", active);
+  });
+}
+
+function validatePlayers() {
   syncPlayersFromInputs();
 
   const players = state.players;
   const impostorCount = Math.max(1, Math.min(parseInt(impostorCountInput.value, 10) || 1, players.length - 1));
   impostorCountInput.value = impostorCount;
+  state.impostorCount = impostorCount;
 
   if (players.length < 3) {
     alert("Necesitas al menos 3 jugadores.");
-    return;
+    return false;
   }
+  return true;
+}
 
+function prepareAssignments() {
+  syncPlayersFromInputs();
+  if (!validatePlayers()) return false;
+
+  const players = state.players;
+  const impostorCount = state.impostorCount;
   const indices = players.map((_, idx) => idx);
   shuffle(indices);
   const impostors = new Set(indices.slice(0, impostorCount));
-  const civilians = indices.slice(impostorCount);
 
   const words = categories[state.category];
   const secret = words[Math.floor(Math.random() * words.length)];
   const alternatives = words.filter((w) => w !== secret);
-  const decoy = alternatives.length
-    ? alternatives[Math.floor(Math.random() * alternatives.length)]
-    : secret;
+  const decoy = alternatives.length ? alternatives[Math.floor(Math.random() * alternatives.length)] : secret;
 
-  cardsContainer.innerHTML = "";
-
-  players.forEach((name, idx) => {
-    const cardNode = cardTemplate.content.cloneNode(true);
-    const card = cardNode.querySelector(".role-card");
-    const pill = cardNode.querySelector(".role-pill");
-    const cardName = cardNode.querySelector(".card-name");
-    const desc = cardNode.querySelector(".role-description");
-    const secretWord = cardNode.querySelector(".secret-word");
-    const revealBtn = cardNode.querySelector(".reveal");
-
+  state.assignments = players.map((name, idx) => {
     const isImpostor = impostors.has(idx);
     const role = isImpostor ? "Impostor" : "Civil";
 
-    pill.textContent = role;
-    cardName.textContent = name;
-    desc.textContent = isImpostor
-      ? "Recibes una palabra distinta, convence al resto."
+    const description = isImpostor
+      ? state.mode === "label"
+        ? "Tu carta dice impostor. Sé creativo para despistar."
+        : "Recibes una palabra distinta, convence al resto."
       : "Compartes la palabra verdadera, describe sin revelar demasiado.";
-    secretWord.textContent = isImpostor ? decoy : secret;
 
-    card.classList.add(isImpostor ? "impostor" : "civil");
-    revealBtn.addEventListener("click", () => card.classList.add("revealed"));
+    const word = isImpostor
+      ? state.mode === "label"
+        ? "Impostor"
+        : decoy
+      : secret;
 
-    cardsContainer.appendChild(cardNode);
+    return { name, role, description, word, isImpostor };
   });
+
+  state.currentIndex = 0;
+  return true;
+}
+
+function renderActiveCard() {
+  const total = state.assignments.length;
+  const assignment = state.assignments[state.currentIndex];
+  if (!assignment) return;
+
+  activeCard.classList.remove("impostor", "civil", "revealed");
+  activeCard.classList.add(assignment.isImpostor ? "impostor" : "civil");
+  activeRole.textContent = assignment.role;
+  activeName.textContent = assignment.name;
+  activeDescription.textContent = assignment.description;
+  activeWord.textContent = assignment.word;
+  cardProgress.textContent = `Jugador ${state.currentIndex + 1} de ${total}`;
+
+  btnReveal.disabled = false;
+  btnHide.disabled = true;
+  activeWord.style.display = "none";
+  btnReveal.style.display = "inline-flex";
+}
+
+function revealWord() {
+  activeCard.classList.add("revealed");
+  activeWord.style.display = "block";
+  btnReveal.style.display = "none";
+  btnHide.disabled = false;
+}
+
+function hideWord() {
+  activeCard.classList.remove("revealed");
+  activeWord.style.display = "none";
+  btnReveal.style.display = "inline-flex";
+  btnHide.disabled = true;
+}
+
+function nextPlayerCard() {
+  if (state.currentIndex < state.assignments.length - 1) {
+    state.currentIndex += 1;
+    hideWord();
+    renderActiveCard();
+  } else {
+    alert("Ya se repartieron todas las cartas. ¡A jugar!");
+  }
 }
 
 function shuffle(arr) {
@@ -209,19 +292,17 @@ function resetGame() {
   adjustPlayerInputs(defaultCount);
   state.wheelRotation = 0;
   roulette.style.transform = "rotate(0deg)";
-  cardsContainer.innerHTML = "";
   spinResult.textContent = "Añade jugadores para girar la ruleta.";
+  state.assignments = [];
+  state.mode = "decoy";
+  renderModes();
+  goToPage("players");
   updateWheel();
-}
-
-function hideWords() {
-  cardsContainer.querySelectorAll(".role-card").forEach((card) => {
-    card.classList.remove("revealed");
-  });
 }
 
 function init() {
   renderCategories();
+  renderModes();
   adjustPlayerInputs(parseInt(playerCountInput.value, 10));
 
   playerCountInput.addEventListener("change", (e) => {
@@ -233,6 +314,7 @@ function init() {
   impostorCountInput.addEventListener("change", (e) => {
     const value = Math.max(1, Math.min(3, parseInt(e.target.value, 10) || 1));
     e.target.value = value;
+    state.impostorCount = value;
   });
 
   btnAddPlayer.addEventListener("click", () => {
@@ -241,9 +323,35 @@ function init() {
   });
 
   btnSpin.addEventListener("click", spinWheel);
-  btnPreparar.addEventListener("click", prepareGame);
-  btnReiniciar.addEventListener("click", resetGame);
-  btnOcultar.addEventListener("click", hideWords);
+  btnReset.addEventListener("click", resetGame);
+
+  btnToCategory.addEventListener("click", () => {
+    if (validatePlayers()) {
+      goToPage("category");
+    }
+  });
+
+  btnToTurns.addEventListener("click", () => {
+    if (validatePlayers()) {
+      goToPage("turns");
+    }
+  });
+
+  btnToCards.addEventListener("click", () => {
+    const ok = prepareAssignments();
+    if (ok) {
+      renderActiveCard();
+      goToPage("cards");
+    }
+  });
+
+  document.querySelectorAll("[data-back]").forEach((btn) => {
+    btn.addEventListener("click", () => goToPage(btn.dataset.back));
+  });
+
+  btnReveal.addEventListener("click", revealWord);
+  btnHide.addEventListener("click", hideWord);
+  btnNextPlayer.addEventListener("click", nextPlayerCard);
 }
 
 init();
