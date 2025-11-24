@@ -48,7 +48,6 @@ const summaryList = document.getElementById("summaryList");
 const activeCard = document.getElementById("activeCard");
 const activeRole = document.getElementById("activeRole");
 const activeName = document.getElementById("activeName");
-const activeDescription = document.getElementById("activeDescription");
 const activeWord = document.getElementById("activeWord");
 
 let dragStartY = 0;
@@ -251,19 +250,13 @@ function prepareAssignments() {
     const isImpostor = impostors.has(idx);
     const role = isImpostor ? "Impostor" : "Civil";
 
-    const description = isImpostor
-      ? state.mode === "label"
-        ? "Tu carta dice impostor. Sé creativo para despistar siempre ya!!"
-        : "Recibes una palabra distinta, convence al resto."
-      : "Compartes la palabra verdadera, describe sin revelar demasiado.";
-
     const word = isImpostor
       ? state.mode === "label"
         ? "Impostor"
         : decoy
       : secret;
 
-    return { name, role, description, word, isImpostor };
+    return { name, role, word, isImpostor };
   });
 
   state.currentIndex = 0;
@@ -279,7 +272,6 @@ function renderActiveCard() {
   activeCard.dataset.role = assignment.isImpostor ? "impostor" : "civil";
   activeRole.textContent = assignment.role;
   activeName.textContent = assignment.name;
-  activeDescription.textContent = assignment.description;
   activeWord.textContent = assignment.word;
   cardProgress.textContent = `Jugador ${state.currentIndex + 1} de ${total}`;
 
