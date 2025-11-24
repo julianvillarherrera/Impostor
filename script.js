@@ -143,6 +143,7 @@ function updateWheel() {
   const total = state.players.length;
   if (!total) {
     roulette.style.background = "conic-gradient(from 0deg, #2d3748 0deg, #2d3748 360deg)";
+    roulette.innerHTML = "";
     spinResult.textContent = "Añade jugadores para girar la ruleta.";
     return;
   }
@@ -150,16 +151,28 @@ function updateWheel() {
   spinResult.textContent = spinPrompt;
 
   const slice = 360 / total;
+  const colors =
+    total % 2 === 0 ? ["#3c4a6b", "#1f2a44"] : ["#3c4a6b", "#1f2a44", "#26334f"];
   const stops = state.players
     .map((_, idx) => {
       const start = idx * slice;
       const end = start + slice;
-      const color = idx % 2 === 0 ? "#3c4a6b" : "#1f2a44";
+      const color = colors[idx % colors.length];
       return `${color} ${start}deg ${end}deg`;
     })
     .join(", ");
 
   roulette.style.background = `conic-gradient(${stops})`;
+
+  roulette.innerHTML = "";
+  state.players.forEach((name, idx) => {
+    const label = document.createElement("div");
+    label.className = "roulette-label";
+    const angle = idx * slice + slice / 2;
+    label.style.transform = `rotate(${angle}deg) translate(0, -45%) rotate(${-angle}deg)`;
+    label.textContent = name;
+    roulette.appendChild(label);
+  });
 }
 
 function spinWheel() {
