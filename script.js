@@ -26,7 +26,6 @@ const pages = document.querySelectorAll(".page");
 const playerList = document.getElementById("playerList");
 const playerTemplate = document.getElementById("playerInputTemplate");
 const categoryGrid = document.getElementById("categoryGrid");
-const selectedCategory = document.getElementById("selectedCategory");
 const roulette = document.getElementById("roulette");
 const spinResult = document.getElementById("spinResult");
 const cardProgress = document.getElementById("cardProgress");
@@ -106,7 +105,6 @@ function renderCategories() {
 
     card.addEventListener("click", () => {
       state.category = cat;
-      selectedCategory.textContent = cat;
       renderCategories();
     });
 
