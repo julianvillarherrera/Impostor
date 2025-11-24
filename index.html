@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>El Impostor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="stepper" id="stepper">
+      <div class="step active" data-step="players">
+        <span class="step-number">1</span>
+        <span>Jugadores</span>
+      </div>
+      <div class="step" data-step="category">
+        <span class="step-number">2</span>
+        <span>Categoría</span>
+      </div>
+      <div class="step" data-step="turns">
+        <span class="step-number">3</span>
+        <span>¿Quién empieza?</span>
+      </div>
+      <div class="step" data-step="cards">
+        <span class="step-number">4</span>
+        <span>Cartas privadas</span>
+      </div>
+    </div>
+
+    <main class="pages">
+      <section class="page" data-page="players">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Paso 1</p>
+              <h2>Número de jugadores y nombres</h2>
+            </div>
+          </div>
+          <div class="control two-cols">
+            <div>
+              <label for="playerCount">Número de jugadores</label>
+              <input type="number" id="playerCount" min="3" max="12" value="6" />
+            </div>
+            <div>
+              <label for="impostorCount">Número de impostores</label>
+              <input type="number" id="impostorCount" min="1" max="3" value="1" />
+            </div>
+          </div>
+          <div class="control">
+            <label>Lista de jugadores</label>
+            <div id="playerList" class="player-list"></div>
+            <button class="btn subtle" id="btnAddPlayer">➕ Añadir jugador</button>
+          </div>
+          <div class="page-actions">
+            <button class="btn primary" id="toCategory">Continuar a categoría</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" data-page="category" hidden>
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Paso 2</p>
+              <h2>Elige categoría y modo</h2>
+            </div>
+          </div>
+          <div class="category-grid" id="categoryGrid"></div>
+          <div class="mode-grid">
+            <button class="mode-card selected" data-mode="decoy">
+              <div class="eyebrow">Modo clásico</div>
+              <strong>Impostor con palabra distinta</strong>
+              <p class="hint">El impostor recibe otra palabra y debe disimular.</p>
+            </button>
+            <button class="mode-card" data-mode="label">
+              <div class="eyebrow">Modo directo</div>
+              <strong>La carta dice "Impostor"</strong>
+              <p class="hint">El impostor sabe su rol al ver la carta.</p>
+            </button>
+          </div>
+          <div class="page-actions">
+            <button class="btn ghost" data-back="players">Volver</button>
+            <button class="btn primary" id="toTurns">Ir a la ruleta</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" data-page="turns" hidden>
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Paso 3</p>
+              <h2>Elige quién empieza</h2>
+            </div>
+            <button class="btn secondary" id="btnSpin">Girar</button>
+          </div>
+          <div class="roulette-wrapper">
+            <canvas class="roulette" id="roulette" width="240" height="240"></canvas>
+            <div class="pointer">▲</div>
+          </div>
+          <p class="result" id="spinResult">Añade jugadores para girar la ruleta.</p>
+          <div class="page-actions">
+            <button class="btn ghost" data-back="category">Volver</button>
+            <button class="btn primary" id="toCards">Repartir cartas</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" data-page="cards" hidden>
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Paso 4</p>
+              <h2>Revela las cartas en privado</h2>
+              <p class="hint">Pasa el móvil a cada jugador. Solo debe ver su carta.</p>
+            </div>
+            <div class="chip" id="cardProgress">Jugador 1 de 1</div>
+          </div>
+          <div class="cards-view">
+            <article class="role-card large" id="activeCard">
+              <div class="card-name" id="activeName">Jugador</div>
+              <div class="card-secret">
+                <div class="role-pill" id="activeRole">Rol</div>
+                <p class="secret-word" id="activeWord"></p>
+              </div>
+              <div class="swipe-hint">
+                <span class="swipe-arrow">▲</span>
+                <p class="hint">Desliza hacia arriba para ver tu rol y palabra</p>
+                <small>Al soltar se ocultará de nuevo</small>
+              </div>
+            </article>
+          </div>
+          <div class="page-actions">
+            <button class="btn primary" id="nextPlayer">Siguiente jugador</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" data-page="ready" hidden>
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">¡A jugar!</p>
+              <h2>Listo para comenzar</h2>
+              <p class="hint">Puedes revelar todos los roles o volver a configurar la partida.</p>
+            </div>
+          </div>
+          <div class="ready-actions">
+            <button class="btn primary" id="showSummary">Revelar roles y palabra</button>
+            <button class="btn secondary" id="btnReplay">Volver a jugar</button>
+            <button class="btn ghost" id="btnRestart">Reiniciar</button>
+          </div>
+          <div class="summary" id="summary" hidden>
+            <h3>Roles y palabras</h3>
+            <div id="summaryList" class="summary-list"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="playerInputTemplate">
+    <div class="player-input">
+      <input type="text" class="player-name" />
+      <button class="icon-btn delete" title="Eliminar">✕</button>
+    </div>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
