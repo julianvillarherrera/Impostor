@@ -169,7 +169,8 @@ function updateWheel() {
     const label = document.createElement("div");
     label.className = "roulette-label";
     const angle = idx * slice + slice / 2;
-    label.style.transform = `rotate(${angle}deg) translate(0, -45%) rotate(${-angle}deg)`;
+    const radius = roulette.clientWidth / 2 - 32;
+    label.style.transform = `translate(-50%, -50%) rotate(${angle}deg) translate(0, -${radius}px) rotate(${-angle}deg)`;
     label.textContent = name;
     roulette.appendChild(label);
   });
