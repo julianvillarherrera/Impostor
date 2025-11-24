@@ -245,7 +245,7 @@ function renderActiveCard() {
   if (!assignment) return;
 
   activeCard.classList.remove("impostor", "civil", "revealed");
-  activeCard.classList.add(assignment.isImpostor ? "impostor" : "civil");
+  activeCard.dataset.role = assignment.isImpostor ? "impostor" : "civil";
   activeRole.textContent = assignment.role;
   activeName.textContent = assignment.name;
   activeDescription.textContent = assignment.description;
@@ -301,6 +301,7 @@ function startReveal(e) {
   dragging = true;
   dragStartY = e.clientY ?? e.touches?.[0]?.clientY ?? 0;
   activeCard.classList.remove("revealed");
+  activeCard.classList.remove("impostor", "civil");
   if (e.pointerId !== undefined) {
     activeCard.setPointerCapture(e.pointerId);
   }
@@ -314,8 +315,11 @@ function moveReveal(e) {
   activeCard.style.transform = `translateY(${translate}px)`;
   if (translate <= -40) {
     activeCard.classList.add("revealing");
+    if (activeCard.dataset.role) {
+      activeCard.classList.add(activeCard.dataset.role);
+    }
   } else {
-    activeCard.classList.remove("revealing");
+    activeCard.classList.remove("revealing", "impostor", "civil");
   }
 }
 
@@ -329,7 +333,9 @@ function endReveal(e) {
   }
   dragging = false;
   activeCard.style.transform = "translateY(0)";
-  setTimeout(() => activeCard.classList.remove("revealing"), 120);
+  setTimeout(() => {
+    activeCard.classList.remove("revealing", "impostor", "civil");
+  }, 120);
 }
 
 function showReadyScreen() {

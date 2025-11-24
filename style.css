@@ -343,10 +343,10 @@ input:focus {
 }
 
 .role-card {
-  background: linear-gradient(180deg, #111b2f 0%, #0b1324 100%);
+  background: #050505;
   border-radius: 18px;
   padding: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: var(--shadow);
   display: grid;
   gap: 10px;
@@ -362,12 +362,12 @@ input:focus {
   gap: 12px;
 }
 
-.role-card.impostor {
+.role-card.revealing.impostor {
   background: linear-gradient(180deg, #1a0f1b 0%, #0f0b16 100%);
   border-color: rgba(255, 95, 109, 0.4);
 }
 
-.role-card.civil {
+.role-card.revealing.civil {
   background: linear-gradient(180deg, #0f1b16 0%, #0b141f 100%);
   border-color: rgba(85, 239, 196, 0.35);
 }
