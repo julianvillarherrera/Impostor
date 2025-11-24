@@ -153,7 +153,7 @@ function updateWheel() {
   const slice = 360 / total;
   const baseColor = "#2f3a54";
   const dividerColor = "#111826";
-  const gap = Math.min(1, slice * 0.2);
+  const gap = Math.min(6, slice * 0.35);
   const stops = state.players
     .map((_, idx) => {
       const start = idx * slice;
