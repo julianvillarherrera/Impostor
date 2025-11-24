@@ -9,7 +9,7 @@ const categories = {
   Países: ["España", "Argentina", "México", "Japón", "Italia", "Brasil"],
 };
 
-const spinPrompt = "Pulsa \"Girar\" para elegir quién empieza.";
+const spinPrompt = "Pulsa \"Girar\"";
 
 const state = {
   category: "Videojuegos",
@@ -253,7 +253,7 @@ function prepareAssignments() {
 
     const description = isImpostor
       ? state.mode === "label"
-        ? "Tu carta dice impostor. Sé creativo para despistar."
+        ? "Tu carta dice impostor. Sé creativo para despistar siempre ya!!"
         : "Recibes una palabra distinta, convence al resto."
       : "Compartes la palabra verdadera, describe sin revelar demasiado.";
 
