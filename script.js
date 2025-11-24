@@ -101,7 +101,7 @@ function renderCategories() {
   Object.keys(categories).forEach((cat) => {
     const card = document.createElement("button");
     card.className = "category-card";
-    card.innerHTML = `<span class="emoji">${emojiForCategory(cat)}</span><div><div class="eyebrow">Paquete</div><strong>${cat}</strong></div>`;
+    card.innerHTML = `<span class="emoji">${emojiForCategory(cat)}</span><div><strong class="category-name">${cat}</strong></div>`;
     if (cat === state.category) card.classList.add("selected");
 
     card.addEventListener("click", () => {

@@ -266,6 +266,10 @@ input:focus {
   font-size: 22px;
 }
 
+.category-card .category-name {
+  color: #fff;
+}
+
 .category-card.selected {
   border-color: #ff8c42;
   box-shadow: 0 10px 24px rgba(255, 140, 66, 0.28);
