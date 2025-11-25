@@ -419,6 +419,29 @@ const categories = {
 
 const spinPrompt = "Pulsa \"Girar\"";
 
+const rouletteColors = [
+  "#ff6b6b",
+  "#ff922b",
+  "#ffd166",
+  "#8ce99a",
+  "#63e6be",
+  "#4dabf7",
+  "#9775fa",
+  "#f06595",
+  "#ff8787",
+  "#ffa94d",
+  "#ffe066",
+  "#b2f2bb",
+  "#96f2d7",
+  "#74c0fc",
+  "#b197fc",
+  "#faa2c1",
+  "#ffc9c9",
+  "#ffd8a8",
+  "#fff3bf",
+  "#d8f5a2",
+];
+
 const state = {
   category: "Videojuegos",
   players: [],
@@ -467,7 +490,7 @@ function createPlayerInput(name = "") {
   const input = clone.querySelector(".player-name");
   const deleteBtn = clone.querySelector(".delete");
 
-  input.value = name;
+  input.placeholder = name || "Jugador";
   deleteBtn.addEventListener("click", () => {
     wrapper.remove();
     syncPlayersFromInputs();
@@ -480,21 +503,33 @@ function createPlayerInput(name = "") {
 function syncPlayersFromInputs() {
   const inputs = playerList.querySelectorAll(".player-name");
   state.players = Array.from(inputs)
-    .map((input, idx) => input.value.trim() || `Jugador ${idx + 1}`)
+    .map((input, idx) => input.value.trim() || input.placeholder || `Jugador ${idx + 1}`)
     .filter(Boolean);
 
   playerCountInput.value = state.players.length;
+  updateImpostorLimit();
   updateWheel();
 }
 
+function updateImpostorLimit() {
+  const players = state.players.length;
+  const maxImpostors = Math.max(1, Math.floor(players / 2));
+  impostorCountInput.max = maxImpostors;
+  const current = parseInt(impostorCountInput.value, 10) || state.impostorCount || 1;
+  const adjusted = Math.max(1, Math.min(current, maxImpostors));
+  impostorCountInput.value = adjusted;
+  state.impostorCount = adjusted;
+}
+
 function adjustPlayerInputs(targetCount) {
+  const safeCount = Math.max(3, Math.min(20, targetCount));
   const current = playerList.childElementCount;
-  if (targetCount > current) {
-    for (let i = current; i < targetCount; i++) {
+  if (safeCount > current) {
+    for (let i = current; i < safeCount; i++) {
       createPlayerInput(`Jugador ${i + 1}`);
     }
-  } else if (targetCount < current) {
-    for (let i = current; i > targetCount; i--) {
+  } else if (safeCount < current) {
+    for (let i = current; i > safeCount; i--) {
       playerList.lastElementChild?.remove();
     }
   }
@@ -560,14 +595,38 @@ function updateWheel() {
   const center = size / 2;
   const borderOffset = 12;
   const radius = center - borderOffset;
-  const baseColor = "#2f3a54";
-  const dividerColor = "#111826";
-  const dividerWidth = 10;
+  const dividerColor = "#0b1224";
+  const dividerWidth = 6;
 
-  ctx.beginPath();
-  ctx.arc(center, center, radius, 0, Math.PI * 2);
-  ctx.fillStyle = baseColor;
-  ctx.fill();
+  ctx.save();
+  ctx.translate(center, center);
+
+  if (total) {
+    const sliceRad = (Math.PI * 2) / total;
+
+    for (let i = 0; i < total; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, radius, i * sliceRad, (i + 1) * sliceRad);
+      ctx.closePath();
+      ctx.fillStyle = rouletteColors[i % rouletteColors.length];
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = dividerColor;
+    ctx.lineWidth = dividerWidth;
+    ctx.lineCap = "butt";
+
+    for (let i = 0; i < total; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(radius, 0);
+      ctx.stroke();
+      ctx.rotate(sliceRad);
+    }
+  }
+
+  ctx.restore();
 
   if (!total) {
     spinResult.textContent = "Añade jugadores para girar la ruleta.";
@@ -575,23 +634,6 @@ function updateWheel() {
   }
 
   spinResult.textContent = spinPrompt;
-
-  const sliceRad = (Math.PI * 2) / total;
-  ctx.save();
-  ctx.translate(center, center);
-  ctx.strokeStyle = dividerColor;
-  ctx.lineWidth = dividerWidth;
-  ctx.lineCap = "butt";
-
-  for (let i = 0; i < total; i++) {
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(radius, 0);
-    ctx.stroke();
-    ctx.rotate(sliceRad);
-  }
-
-  ctx.restore();
 }
 
 function spinWheel() {
@@ -628,9 +670,7 @@ function validatePlayers() {
   syncPlayersFromInputs();
 
   const players = state.players;
-  const impostorCount = Math.max(1, Math.min(parseInt(impostorCountInput.value, 10) || 1, players.length - 1));
-  impostorCountInput.value = impostorCount;
-  state.impostorCount = impostorCount;
+  updateImpostorLimit();
 
   if (players.length < 3) {
     alert("Necesitas al menos 3 jugadores.");
@@ -676,9 +716,16 @@ function renderActiveCard() {
   const assignment = state.assignments[state.currentIndex];
   if (!assignment) return;
 
+  const showRole = state.mode === "label";
+
   activeCard.classList.remove("impostor", "civil", "revealed");
-  activeCard.dataset.role = assignment.isImpostor ? "impostor" : "civil";
-  activeRole.textContent = assignment.role;
+  if (showRole) {
+    activeCard.dataset.role = assignment.isImpostor ? "impostor" : "civil";
+    activeRole.textContent = assignment.role;
+  } else {
+    delete activeCard.dataset.role;
+    activeRole.textContent = "Tu rol está oculto";
+  }
   activeName.textContent = assignment.name;
   activeWord.textContent = assignment.word;
   cardProgress.textContent = `Jugador ${state.currentIndex + 1} de ${total}`;
@@ -790,13 +837,15 @@ function init() {
   adjustPlayerInputs(parseInt(playerCountInput.value, 10));
 
   playerCountInput.addEventListener("change", (e) => {
-    const value = Math.max(3, Math.min(12, parseInt(e.target.value, 10) || 3));
+    const value = Math.max(3, Math.min(20, parseInt(e.target.value, 10) || 3));
     e.target.value = value;
     adjustPlayerInputs(value);
   });
 
   impostorCountInput.addEventListener("change", (e) => {
-    const value = Math.max(1, Math.min(3, parseInt(e.target.value, 10) || 1));
+    const current = parseInt(e.target.value, 10) || 1;
+    const max = Math.max(1, Math.floor(state.players.length / 2));
+    const value = Math.max(1, Math.min(current, max));
     e.target.value = value;
     state.impostorCount = value;
   });
